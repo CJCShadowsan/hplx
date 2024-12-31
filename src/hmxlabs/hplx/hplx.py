@@ -12,6 +12,7 @@ LOG_FILE = "hplx.log"
 MAX_RESULTS_FILE = "hplx-highest-gflops"
 ALL_RESULTS_FILE = "hplx-all"
 
+
 def main():
     curdir = os.getcwd()
     logfile = os.path.join(curdir, LOG_FILE)
@@ -29,20 +30,21 @@ def main():
         logging.error("An unknown and unhandled error occurred. Exiting", exc_info=e)
         sys.exit(1)
 
+
 def setup_argparse() -> argparse.Namespace:
     argparser = argparse.ArgumentParser(description="HPLinpack benchmark extension tool",
                                         epilog="(C) HMx Labs Limited 2024. All Rights Reserved.")
 
     # Global options
     argparser.add_argument("--output-jsonlines", dest="output_jsonlines", required=False,
-                                            action=argparse.BooleanOptionalAction, default=False,
-                                            help="Output results in JSON lines format")
+                           action=argparse.BooleanOptionalAction, default=False,
+                           help="Output results in JSON lines format")
     argparser.add_argument("--cpu-count", dest="cpu_count", required=False, type=int,
-                              default=0,
-                              help="The number of physical cores to use in the test. Default is the number of physical cores on the machine")
+                           default=0,
+                           help="The number of physical cores to use in the test. Default is the number of physical cores on the machine")
     argparser.add_argument("--available-memory", dest="available_memory", required=False, type=int,
-                              default=psutil.virtual_memory().total,
-                              help="The total available memory in bytes. Default is the total available memory on the machine")
+                           default=int(psutil.virtual_memory().total * 0.8),
+                           help='The total available memory in bytes. Default is 80 percent of the total available memory on the machine')
     argparser.add_argument("--use-smt", dest="use_smt", required=False, type=bool, action=argparse.BooleanOptionalAction,
                            default=False, help="Use SMT (Hyperthreading) if available when counting CPUs. Default is False")
 
@@ -51,43 +53,43 @@ def setup_argparse() -> argparse.Namespace:
     parser_output = subparsers.add_parser("parse-results", help="Parse HPLinpack output files")
     parser_output.set_defaults(func=parse_output)
     parser_output.add_argument("--input-file", dest="input_file", required=True, type=str,
-                                  help="The HPL results file to process")
+                               help="The HPL results file to process")
     parser_output.add_argument("--output-file", dest="output_file", required=False, type=str, default=None,
-                                  help="The output file to write the processed results to. If not specified no output file is written")
+                               help="The output file to write the processed results to. If not specified no output file is written")
 
     # Generate input file (theoretical best)
     parser_gen_input_tbest = subparsers.add_parser("gen-input-theoretical-best", help="Generate theoretical best HPLinpack input files")
     parser_gen_input_tbest.add_argument("--filename", dest="output_file", required=False, type=str, default="HPL.dat",
-                                  help="The output file to write the generated input to. Default is HPL.dat")
+                                        help="The output file to write the generated input to. Default is HPL.dat")
     parser_gen_input_tbest.add_argument("--results-file", dest="results_file", required=False, type=str, default=None,
                                         help="The results file to write the generated input to. HPL results are written to this stdout")
     parser_gen_input_tbest.add_argument("--min-prob-sizes", dest="min_prob_sizes", type=int, required=False,
-                                            default=1000,
-                                            help="The minimum problem size (N) to evaluate for use. Default is 1000")
+                                        default=1000,
+                                        help="The minimum problem size (N) to evaluate for use. Default is 1000")
     parser_gen_input_tbest.add_argument("--max-prob-sizes", dest="max_prob_sizes", type=int, required=False,
-                                            default=1000000,
-                                            help="The maximum problem size (N) to evaluate for use. Default is 1000000")
+                                        default=1000000,
+                                        help="The maximum problem size (N) to evaluate for use. Default is 1000000")
     parser_gen_input_tbest.add_argument("--prob-sizes-step", dest="prob_sizes_step", type=int, required=False,
-                                            default=5000,
-                                            help="The maximum problem size (N) step size for theoretical evaluation. Default is 5000")
+                                        default=5000,
+                                        help="The maximum problem size (N) step size for theoretical evaluation. Default is 5000")
     parser_gen_input_tbest.set_defaults(func=generate_input_tbest)
 
     # Generate input file (calc optimal)
     parser_gen_input_calc_optimal = subparsers.add_parser("gen-input-calc-optimal", help="Generate HPLinpack input file to experimentally determine optimal parameters")
     parser_gen_input_calc_optimal.add_argument("--filename", dest="output_file", required=False, type=str, default="HPL.dat",
-                                        help="The output file to write the generated input to. Default is HPL.dat")
+                                               help="The output file to write the generated input to. Default is HPL.dat")
     parser_gen_input_calc_optimal.add_argument("--results-file", dest="results_file", required=False, type=str, default=None,
-                                        help="The results file to write the generated input to. HPL results are written to this stdout")
+                                               help="The results file to write the generated input to. HPL results are written to this stdout")
     parser_gen_input_calc_optimal.add_argument("--num-prob-sizes", dest="n_prob_sizes", type=int, required=False, default=10,
-                                     help="The number of problem sizes (N) to use in the test. Default is 10")
+                                               help="The number of problem sizes (N) to use in the test. Default is 10")
     parser_gen_input_calc_optimal.add_argument("--num-block-sizes", dest="n_block_sizes", type=int, required=False, default=10,
-                                     help="The number of block sizes (NB) to use in the test. Default is 10")
+                                               help="The number of block sizes (NB) to use in the test. Default is 10")
     parser_gen_input_calc_optimal.set_defaults(func=generate_input_calc_optimal)
 
     # Calculate optimal
     parser_find_optimal = subparsers.add_parser("calc-optimal", help="Find optimal HPLinpack parameters via exectution")
     parser_find_optimal.add_argument("--num-prob-sizes", dest="n_prob_sizes", type=int, required=False, default=10,
-                                    help="The number of problem sizes (N) to use in the test. Default is 10")
+                                     help="The number of problem sizes (N) to use in the test. Default is 10")
     parser_find_optimal.add_argument("--num-block-sizes", dest="n_block_sizes", type=int, required=False, default=10,
                                      help="The number of block sizes (NB) to use in the test. Default is 10")
     parser_find_optimal.set_defaults(func=calc_optimal)
@@ -96,29 +98,29 @@ def setup_argparse() -> argparse.Namespace:
     parser_theoretical_optimal = subparsers.add_parser("run-theoretical-optimal",
                                                        help="Use theoretical best input parameters to run HPL")
     parser_theoretical_optimal.add_argument("--min-prob-sizes", dest="min_prob_sizes", type=int, required=False, default=1000,
-                                     help="The minimum problem size (N) to evaluate for use. Default is 1000")
+                                            help="The minimum problem size (N) to evaluate for use. Default is 1000")
     parser_theoretical_optimal.add_argument("--max-prob-sizes", dest="max_prob_sizes", type=int, required=False, default=0,
-                                     help="The maximum problem size (N) to evaluate for use. Default will determine N based on available memory")
+                                            help="The maximum problem size (N) to evaluate for use. Default will determine N based on available memory")
     parser_theoretical_optimal.add_argument("--prob-sizes-step", dest="prob_sizes_step", type=int, required=False, default=5000,
-                                     help="The problem size (N) step size for theoretical evaluation. Default is 5000")
+                                            help="The problem size (N) step size for theoretical evaluation. Default is 5000")
     parser_theoretical_optimal.set_defaults(func=run_theoretical_optimal)
 
     # Run ALL.
 
     parser_run_all = subparsers.add_parser("run-all", help="Run all theoretical best and experimental optimal tests")
     parser_run_all.add_argument("--num-prob-sizes", dest="n_prob_sizes", type=int, required=False, default=10,
-                                     help="The number of problem sizes (N) to use experimentally. Default is 10")
+                                help="The number of problem sizes (N) to use experimentally. Default is 10")
     parser_run_all.add_argument("--num-block-sizes", dest="n_block_sizes", type=int, required=False, default=10,
-                                     help="The number of block sizes (NB) to use experimentally. Default is 10")
+                                help="The number of block sizes (NB) to use experimentally. Default is 10")
     parser_run_all.add_argument("--min-prob-sizes", dest="min_prob_sizes", type=int, required=False,
-                                            default=1000,
-                                            help="The minimum problem size (N) to determine the theoretical max Default is 1000")
+                                default=1000,
+                                help="The minimum problem size (N) to determine the theoretical max Default is 1000")
     parser_run_all.add_argument("--max-prob-sizes", dest="max_prob_sizes", type=int, required=False,
-                                            default=1000000,
-                                            help="The maximum problem size (N) to determine the theoretical max. Default is 1000000")
+                                default=1000000,
+                                help="The maximum problem size (N) to determine the theoretical max. Default is 1000000")
     parser_run_all.add_argument("--prob-sizes-step", dest="prob_sizes_step", type=int, required=False,
-                                            default=5000,
-                                            help="The problem size (N) step size for to determine the theoretical max. Default is 5000")
+                                default=5000,
+                                help="The problem size (N) step size for to determine the theoretical max. Default is 5000")
     parser_run_all.set_defaults(func=run_all_calcs)
 
     try:
@@ -196,7 +198,6 @@ def generate_input_tbest(args):
                                                         [hpl_dat_inputs[2]],
                                                         [hpl_dat_inputs[3]], write_results_file, results_file)
 
-
     write_hpl_input_file(hpl_dat, output_file)
 
 
@@ -238,6 +239,7 @@ def run_theoretical_optimal(args):
     results = _run_theoretical_optimal(args)
     write_results(MAX_RESULTS_FILE, results, args.output_jsonlines)
 
+
 def calc_optimal(args):
     results = _run_calc_optimal(args)
     highest_gflop_result = HplResult.highest_gflops(results)
@@ -246,6 +248,7 @@ def calc_optimal(args):
     logging.info("Writing highest GFLOPS to file")
     write_results(MAX_RESULTS_FILE, [highest_gflop_result], args.output_jsonlines)
     write_results(ALL_RESULTS_FILE, results, args.output_jsonlines)
+
 
 def run_all_calcs(args) -> None:
     theoretical_results = _run_theoretical_optimal(args)
@@ -257,6 +260,7 @@ def run_all_calcs(args) -> None:
     logging.info("Writing highest GFLOPS to file")
     write_results(MAX_RESULTS_FILE, [highest_gflop_result], args.output_jsonlines)
     write_results(ALL_RESULTS_FILE, all_results, args.output_jsonlines)
+
 
 def write_hpl_input_file(contents: str, filename: str) -> None:
     if Path(filename).exists():
@@ -341,6 +345,7 @@ def _run_theoretical_optimal(args) -> list[HplResult]:
     logging.info(f"Theoretical best GFLOPS: {best_gflops.gflops}")
     return results
 
+
 def _run_calc_optimal(args) -> list[HplResult]:
     logging.info(
         f"Calculating maximal gflops experimentally with {args.n_prob_sizes} problem sizes and {args.n_block_sizes} block sizes")
@@ -384,14 +389,15 @@ def get_cpu_count(args) -> int:
         logging.info(f"Using user specified CPU count: {args.cpu_count}")
         return args.cpu_count
 
-    smt_off_cpus = psutil.cpu_count(logical=False)
-    smt_on_cpus = psutil.cpu_count(logical=True)
+    smt_off_cpus = int(psutil.cpu_count(logical=False))
+    smt_on_cpus = int(psutil.cpu_count(logical=True))
     cpu_count = smt_off_cpus
     if args.use_smt:
         cpu_count = smt_on_cpus
 
     logging.info(f"Using {cpu_count} CPUs. User SMT: {args.use_smt}. Physical CPU Cores: {smt_off_cpus}. Logical CPU Cores: {smt_on_cpus}")
     return cpu_count
+
 
 if __name__ == "__main__":
     main()

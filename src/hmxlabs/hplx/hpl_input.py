@@ -54,11 +54,11 @@ class HplInputFileGenerator:
     output_lines_13_36 = LINES_13_36
 
     @staticmethod
-    def generate_theoretical_best_inputs(  cpu_count: int,
-                                           available_memory: int,
-                                           min_n: int = MIN_N,
-                                           max_n:int = 0,
-                                           step_n:int = STEP_N) -> (int, int, int, int):
+    def generate_theoretical_best_inputs(cpu_count: int,
+                                         available_memory: int,
+                                         min_n: int = MIN_N,
+                                         max_n: int = 0,
+                                         step_n: int = STEP_N) -> (int, int, int, int):
         """
             This function calculates the optimal N, NB, P, and Q for HPL based on available memory and cores.
             Taken from: https://gist.github.com/CJCShadowsan/94efdf21539f3156414c1224b1c76605
@@ -94,7 +94,6 @@ class HplInputFileGenerator:
 
         return best_params
 
-
     @staticmethod
     def generate_possible_process_grids(cpu_count: int) -> ([int], [int]):
         """
@@ -109,7 +108,6 @@ class HplInputFileGenerator:
                     process_grids[1].append(Q)
         return process_grids
 
-
     @staticmethod
     def calculate_max_problem_size(available_memory: int) -> int:
         # Apply a conservative estimate of 80% of memory can actually be used
@@ -117,14 +115,12 @@ class HplInputFileGenerator:
         num_doubles = available_memory*0.8 / 8
         return int(math.sqrt(num_doubles))
 
-
     @staticmethod
     def generate_input_file_calc_best_process_grid(cpu_count: int, write_file: bool, output_file: str, row_major: bool = True) -> str:
         process_grid = HplInputFileGenerator.generate_possible_process_grids(cpu_count)
         # Use a very small problem size to calculate the best process grid to minimise compute time
         # as the variation due to block size and problem size is minimal in determining the best grid
         return HplInputFileGenerator.generate_input_file([1000], [64], process_grid[0], process_grid[1], write_file, output_file, row_major)
-
 
     @staticmethod
     def generate_possible_problem_sizes(available_memory: int, num_sizes: int = 10) -> [int]:
@@ -135,7 +131,6 @@ class HplInputFileGenerator:
             min_problem_size = 1000
         step_size = int((max_problem_size - min_problem_size) / (num_sizes-1))
         return list(range(min_problem_size, max_problem_size, step_size))
-
 
     @staticmethod
     def generate_possible_block_sizes(n: int, num_block_sizes: int = 10) -> [int]:
